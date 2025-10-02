@@ -6,6 +6,7 @@ name: Create Package
 permissions:
   packages: write
   actions: write
+  contents: write
 jobs:
     create-package:
         name: Create Package
