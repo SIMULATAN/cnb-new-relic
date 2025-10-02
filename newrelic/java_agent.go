@@ -29,15 +29,17 @@ import (
 
 type JavaAgent struct {
 	BuildpackPath    string
+	Binding          libcnb.Binding
 	LayerContributor libpak.DependencyLayerContributor
 	Logger           bard.Logger
 }
 
-func NewJavaAgent(buildpackPath string, dependency libpak.BuildpackDependency, cache libpak.DependencyCache) (JavaAgent, libcnb.BOMEntry) {
+func NewJavaAgent(buildpackPath string, binding libcnb.Binding, dependency libpak.BuildpackDependency, cache libpak.DependencyCache) (JavaAgent, libcnb.BOMEntry) {
 	contributor, entry := libpak.NewDependencyLayer(dependency, cache, libcnb.LayerTypes{
 		Launch: true,
 	})
 	return JavaAgent{
+		Binding:          binding,
 		BuildpackPath:    buildpackPath,
 		LayerContributor: contributor,
 	}, entry
@@ -57,7 +59,10 @@ func (j JavaAgent) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
 			"-javaagent:%s -Dnewrelic.home=%s", file, layer.Path)
 		layer.LaunchEnvironment.Default("NEW_RELIC_LOG", "stdout")
 
-		file = filepath.Join(j.BuildpackPath, "resources", "newrelic.yml")
+		file = filepath.Join(j.Binding.Path, "newrelic.yml")
+		if ok, _ := sherpa.FileExists(file); !ok {
+			file = filepath.Join(j.BuildpackPath, "resources", "newrelic.yml")
+		}
 		in, err := os.Open(file)
 		if err != nil {
 			return libcnb.Layer{}, fmt.Errorf("unable to open %s\n%w", file, err)

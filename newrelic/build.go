@@ -22,6 +22,7 @@ import (
 	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/libpak"
 	"github.com/paketo-buildpacks/libpak/bard"
+	"github.com/paketo-buildpacks/libpak/bindings"
 	"github.com/paketo-buildpacks/libpak/effect"
 )
 
@@ -59,7 +60,8 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 			return libcnb.BuildResult{}, fmt.Errorf("unable to find dependency\n%w", err)
 		}
 
-		ja, be := NewJavaAgent(context.Buildpack.Path, dep, dc)
+		bi, _, _ := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("NewRelic"))
+		ja, be := NewJavaAgent(context.Buildpack.Path, bi, dep, dc)
 		ja.Logger = b.Logger
 		result.Layers = append(result.Layers, ja)
 		result.BOM.Entries = append(result.BOM.Entries, be)
