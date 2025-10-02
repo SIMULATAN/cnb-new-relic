@@ -60,7 +60,8 @@ func (j JavaAgent) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
 		layer.LaunchEnvironment.Default("NEW_RELIC_LOG", "stdout")
 
 		file = filepath.Join(j.Binding.Path, "newrelic.yml")
-		if ok, _ := sherpa.FileExists(file); !ok {
+		if ok, err := sherpa.FileExists(file); !ok {
+			j.Logger.Bodyf("Could not read user-supplied file %s: %e", file, err)
 			file = filepath.Join(j.BuildpackPath, "resources", "newrelic.yml")
 		}
 		in, err := os.Open(file)
