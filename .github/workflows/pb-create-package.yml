@@ -3,19 +3,22 @@ name: Create Package
     release:
         types:
             - published
+permissions:
+  packages: write
+  actions: write
 jobs:
     create-package:
         name: Create Package
         runs-on:
             - ubuntu-latest
         steps:
-            - name: Docker login docker.io
+            - name: Docker login ghcr.io
               if: ${{ (github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork) && (github.actor != 'dependabot[bot]') }}
               uses: docker/login-action@v3
               with:
-                password: ${{ secrets.PAKETO_BUILDPACKS_DOCKERHUB_PASSWORD }}
-                registry: docker.io
-                username: ${{ secrets.PAKETO_BUILDPACKS_DOCKERHUB_USERNAME }}
+                registry: ghcr.io
+                password: ${{ github.actor }}
+                username: ${{ secrets.GITHUB_TOKEN }}
             - uses: actions/setup-go@v5
               with:
                 go-version: "1.24"
@@ -175,7 +178,7 @@ jobs:
                   echo "ttl-image-tag=${TAG:-}" >> "$GITHUB_OUTPUT"
                 fi
               env:
-                PACKAGES: docker.io/paketobuildpacks/new-relic
+                PACKAGES: ghcr.io/simulatan/cnb-new-relic
                 PUBLISH: "true"
                 VERSION: ${{ steps.version.outputs.version }}
                 VERSION_MAJOR: ${{ steps.version.outputs.version-major }}
@@ -201,11 +204,4 @@ jobs:
                   --field "body=${RELEASE_BODY//<!-- DIGEST PLACEHOLDER -->/\`${DIGEST}\`}"
               env:
                 DIGEST: ${{ steps.package.outputs.digest }}
-                GITHUB_TOKEN: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
-            - if: ${{ true }}
-              uses: docker://ghcr.io/buildpacks/actions/registry/request-add-entry:5.8.9
-              with:
-                address: docker.io/paketobuildpacks/new-relic@${{ steps.package.outputs.digest }}
-                id: paketo-buildpacks/new-relic
-                token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
-                version: ${{ steps.version.outputs.version }}
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
